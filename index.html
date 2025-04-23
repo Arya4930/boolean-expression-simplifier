@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-Map Boolean Simplifier</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        input {
+            padding: 12px;
+            width: 80%;
+            max-width: 400px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 20px;
+            background: #0078d7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background: #005fa3;
+        }
+        #output {
+            margin-top: 20px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            color: #d8000c;
+            background: #ffdddd;
+            border: 1px solid #d8000c;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Boolean Expression Simplifier</h2>
+        <input type="text" id="sopInput" placeholder="Enter SOP Expression (e.g., (A + B' + C)(A + B + C'))">
+        <br>
+        <button id="solveButton">Simplify</button>
+        <div id="output"></div>
+    </div>
+
+    <script>
+        document.getElementById("solveButton").addEventListener("click", async function(e) {
+            e.preventDefault();
+
+            const sopExpression = document.getElementById("sopInput").value.trim();
+            const outputElement = document.getElementById("output");
+
+            if (!sopExpression) {
+                outputElement.innerHTML = `<div class="error">Please enter a Boolean SOP expression!</div>`;
+                return;
+            }
+
+            outputElement.innerHTML = "Simplifying... please wait.";
+
+            try {
+                const response = await fetch("http://localhost:3000/runSimulation", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify({ sop: sopExpression }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    outputElement.innerHTML = `
+                        <strong>Input:</strong> ${sopExpression}<br><br>
+                        <strong>Binary Minterms:</strong> ${result.binaryInput}<br><br>
+                        <strong>Result:</strong>
+                        <div>${result.result}</div>
+                    `;
+                } else {
+                    outputElement.innerHTML = `<div class="error">Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                outputElement.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        });
+    </script>
+
+</body>
+</html>
